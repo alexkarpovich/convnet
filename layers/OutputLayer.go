@@ -4,7 +4,7 @@ import (
 	//"fmt"
 	"math"
 	"math/rand"
-	. "github.com/alexkarpovich/convnet/api/convnet/utils"
+	. "github.com/alexkarpovich/convnet/utils"
 )
 
 type OutputLayer struct {

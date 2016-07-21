@@ -3,7 +3,7 @@ package layers
 import (
 	//"fmt"
 	"math"
-	. "github.com/alexkarpovich/convnet/api/convnet/utils"
+	. "github.com/alexkarpovich/convnet/utils"
 )
 
 type PoolLayer struct {

@@ -1,7 +1,7 @@
 package layers
 
 import (
-	"github.com/alexkarpovich/convnet/api/convnet/interfaces"
+	"github.com/alexkarpovich/convnet/interfaces"
 )
 
 type ILayer interface {

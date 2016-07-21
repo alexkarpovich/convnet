@@ -3,7 +3,7 @@ package layers
 import (
 	//"fmt"
 	"math/rand"
-	. "github.com/alexkarpovich/convnet/api/convnet/utils"
+	. "github.com/alexkarpovich/convnet/utils"
 )
 
 type FCLayer struct {

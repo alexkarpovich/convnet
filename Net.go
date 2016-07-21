@@ -6,9 +6,9 @@ import (
 	"image"
 	"runtime"
 	"github.com/petar/GoMNIST"
-	"github.com/alexkarpovich/convnet/api/convnet/config"
-	. "github.com/alexkarpovich/convnet/api/convnet/layers"
-	. "github.com/alexkarpovich/convnet/api/convnet/interfaces"
+	"github.com/alexkarpovich/convnet/config"
+	. "github.com/alexkarpovich/convnet/layers"
+	. "github.com/alexkarpovich/convnet/interfaces"
 )
 
 type Net struct {
@@ -18,6 +18,12 @@ type Net struct {
 	layers []ILayer
 	label []float64
 	err float64
+}
+
+func (net *Net) FromConfig(conf string) {
+	netConfig := config.ParseString(conf)
+	net.size = netConfig.Size
+	net.initLayers(netConfig.Layers)
 }
 
 func (net *Net) Init() {

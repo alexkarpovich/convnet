@@ -14,7 +14,7 @@ type Net struct {
 }
 
 type Layer struct {
-	Class string `json:"class"`
+	Class string `json:"type"`
 	Size []int `json:"size"`
 	Activate string `json:"activate"`
 	/* Two below only for conv layer */
@@ -32,6 +32,14 @@ func GetNetConfig() Net {
 	net := Net{}
 
 	json.Unmarshal(file, &net)
+
+	return net
+}
+
+func ParseString(config string) Net {
+	net := Net{}
+
+	json.Unmarshal([]byte(config), &net)
 
 	return net
 }
