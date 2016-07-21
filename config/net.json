@@ -1,0 +1,11 @@
+{
+  "size": [28, 28],
+  "layers": [
+    { "class": "conv", "size": [5, 5], "count": 6, "shape": "same", "activate": "sigmoid" },
+    { "class": "pool", "size": [2, 2] },
+    { "class": "conv", "size": [5, 5], "count": 3, "shape": "same", "activate": "sigmoid" },
+    { "class": "pool", "size": [2, 2] },
+    { "class": "fc", "size": [300], "activate": "sigmoid" },
+    { "class": "output", "size": [10], "activate": "sigmoid" }
+  ]
+}
