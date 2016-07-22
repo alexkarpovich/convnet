@@ -35,11 +35,3 @@ func GetNetConfig() Net {
 
 	return net
 }
-
-func ParseString(config string) Net {
-	net := Net{}
-
-	json.Unmarshal([]byte(config), &net)
-
-	return net
-}

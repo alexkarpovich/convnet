@@ -20,8 +20,7 @@ type Net struct {
 	err float64
 }
 
-func (net *Net) FromConfig(conf string) {
-	netConfig := config.ParseString(conf)
+func (net *Net) FromConfig(netConfig config.Net) {
 	net.size = netConfig.Size
 	net.initLayers(netConfig.Layers)
 }
