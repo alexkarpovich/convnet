@@ -12,17 +12,25 @@ import (
 )
 
 type Net struct {
+	chnl chan NetState
 	size []int
 	in []float64
 	out []float64
 	layers []ILayer
 	label []float64
 	err float64
+	isTraining bool
+	maxIterations int
+	minError float64
+	learningRate float64
 }
 
-func (net *Net) FromConfig(netConfig config.Net) {
+func (net *Net) FromConfig(netConfig config.Net) chan NetState {
 	net.size = netConfig.Size
 	net.initLayers(netConfig.Layers)
+	net.chnl = make(chan NetState, 3)
+
+	return net.chnl
 }
 
 func (net *Net) Init() {
@@ -70,15 +78,19 @@ func (net *Net) initLayers(layersConfig []config.Layer) {
 }
 
 func (net *Net) Train(params TrainParams, trainingSet *GoMNIST.Set) {
+	net.isTraining = true
+	net.maxIterations = params.MaxIteration
+	net.minError = params.MinError
+	net.learningRate = params.LearningRate
 	var err float64 = 10.0
 	var mem runtime.MemStats
 	iter := 1
 
-	for err > params.MinError {
+	for err > net.minError && net.isTraining {
 		err = 0
 		start := time.Now()
 
-		for i:=0; i<100; i++ {
+		for i:=0; i<400; i++ {
 			net.setMNISTExample(trainingSet.Images[i], trainingSet.Labels[i])
 			net.forward()
 			net.backward()
@@ -86,13 +98,18 @@ func (net *Net) Train(params TrainParams, trainingSet *GoMNIST.Set) {
 			err += net.err
 		}
 
+		net.chnl <- net.State()
 		elapsed := time.Since(start)
-
 		runtime.ReadMemStats(&mem)
-		fmt.Println(iter, "E =", err, ", took=", elapsed, "sec, alloc=", mem.Alloc/1048576, "MB")
+
+		fmt.Printf("%d E=%4.4f, took=%v, alloc=%d MB\n", iter, err, elapsed, mem.Alloc/1048576)
 
 		iter++
 	}
+}
+
+func (net *Net) StopTraining() {
+	net.isTraining = false
 }
 
 func (net *Net) Test(img image.Image) {
@@ -104,16 +121,43 @@ func (net *Net) Test(img image.Image) {
 	fmt.Println(net.out)
 }
 
-func (net *Net) GetSize() []int {
+func (net *Net) Size() []int {
 	return net.size
 }
 
-func (net *Net) GetInput() []float64 {
+func (net *Net) Input() []float64 {
 	return net.in
 }
 
-func (net *Net) GetLabel() []float64 {
+func (net *Net) Label() []float64 {
 	return net.label
+}
+
+func (net *Net) State() NetState {
+	netState := NetState{
+		Size:net.size,
+		In: net.in,
+		Out: net.out,
+		Layers: make([]LayerState, len(net.layers)),
+	}
+
+	for i := range net.layers {
+		netState.Layers[i] = net.layers[i].State()
+	}
+
+	return netState
+}
+
+func (net *Net) LearningRate() float64 {
+	return net.learningRate
+}
+
+func (net *Net) MaxIterations() int {
+	return net.maxIterations
+}
+
+func (net *Net) MinError() float64 {
+	return net.minError
 }
 
 func (net *Net) SetOutput(output []float64) {
@@ -122,6 +166,21 @@ func (net *Net) SetOutput(output []float64) {
 
 func (net *Net) SetError(err float64) {
 	net.err = err
+}
+
+func (net *Net) Weights() []WeightsState {
+	weights := make([]WeightsState, len(net.layers))
+	for i := range net.layers {
+		weights[i] = net.layers[i].WeightsState()
+	}
+
+	return weights
+}
+
+func (net *Net) LoadWeights(weights []WeightsState) {
+	for i := range net.layers {
+		net.layers[i].SetWeightsState(weights[i])
+	}
 }
 
 func (net *Net) prepareInput(img image.Image) {

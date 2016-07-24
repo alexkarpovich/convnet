@@ -9,11 +9,14 @@ type ILayer interface {
 	SetPrev(ILayer)
 	SetNext(ILayer)
 	Prepare()
-	GetClass() string
-	GetSize() []int
-	GetProp(string) interface{}
+	Class() string
+	Size() []int
+	Prop(string) interface{}
 	FeedForward()
 	BackProp()
+	State() interfaces.LayerState
+	WeightsState() interfaces.WeightsState
+	SetWeightsState(interfaces.WeightsState)
 }
 
 type Layer struct {
@@ -40,10 +43,10 @@ func (l *Layer) SetNext(nextLayer ILayer) {
 	l.next = nextLayer
 }
 
-func (l *Layer) GetClass() string {
+func (l *Layer) Class() string {
 	return l.class
 }
 
-func (l *Layer) GetSize() []int {
+func (l *Layer) Size() []int {
 	return l.size
 }

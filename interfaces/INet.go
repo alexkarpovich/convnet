@@ -2,16 +2,33 @@ package interfaces
 
 import (
 	"image"
+	"github.com/alexkarpovich/convnet/config"
 	"github.com/petar/GoMNIST"
 )
 
 type INet interface {
 	Init()
-	GetSize() []int
-	GetInput() []float64
-	GetLabel() []float64
-	SetOutput([]float64)
+	FromConfig(config.Net) chan NetState
+	Size() []int
+	Input() []float64
+	Label() []float64
+	State() NetState
 	SetError(float64)
+	SetOutput([]float64)
+	Weights() []WeightsState
+	LoadWeights([]WeightsState)
 	Train(TrainParams, *GoMNIST.Set)
+	StopTraining()
 	Test(image.Image)
+	LearningRate() float64
+	MaxIterations() int
+	MinError() float64
 }
+
+type NetState struct {
+	Size []int `json:"size"`
+	In []float64 `json:"in"`
+	Out []float64 `json:"out"`
+	Layers []LayerState `json:"layers"`
+}
+

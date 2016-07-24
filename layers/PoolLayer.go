@@ -4,6 +4,7 @@ import (
 	//"fmt"
 	"math"
 	. "github.com/alexkarpovich/convnet/utils"
+	"github.com/alexkarpovich/convnet/interfaces"
 )
 
 type PoolLayer struct {
@@ -14,16 +15,16 @@ type PoolLayer struct {
 
 func (l *PoolLayer) Prepare() {
 	outSize := l.getOutSize()
-	prevCount := l.prev.GetProp("count").(int)
-	prevInCount := l.prev.GetProp("inCount").(int)
+	prevCount := l.prev.Prop("count").(int)
+	prevInCount := l.prev.Prop("inCount").(int)
 	l.count = prevCount * prevInCount
 	l.out = make([]float64, l.count*outSize[0]*outSize[1])
 	l.deltas = make([]float64, l.count*outSize[0]*outSize[1])
 }
 
 func (l *PoolLayer) FeedForward() {
-	prevOut := l.prev.GetProp("out").([]float64)
-	inSize := l.prev.GetProp("outSize").([]int)
+	prevOut := l.prev.Prop("out").([]float64)
+	inSize := l.prev.Prop("outSize").([]int)
 	p := 0
 	step := inSize[0]*inSize[1]
 
@@ -50,17 +51,17 @@ func (l *PoolLayer) FeedForward() {
 }
 
 func (l *PoolLayer) BackProp() {
-	nextClass := l.next.GetClass()
-	nextDeltas := l.next.GetProp("deltas").([]float64);
-	nextIn := l.next.GetProp("in").([]float64);
+	nextClass := l.next.Class()
+	nextDeltas := l.next.Prop("deltas").([]float64);
+	nextIn := l.next.Prop("in").([]float64);
 	outSize := l.getOutSize()
 	l.deltas = make([]float64, l.count*outSize[0]*outSize[1])
 
 	if nextClass == "conv" {
-		nextKernels := l.next.GetProp("kernels").([]float64)
-		nextOutSize := l.next.GetProp("outSize").([]int)
-		nextCount := l.next.GetProp("count").(int)
-		nextKernelSize := l.next.GetSize()
+		nextKernels := l.next.Prop("kernels").([]float64)
+		nextOutSize := l.next.Prop("outSize").([]int)
+		nextCount := l.next.Prop("count").(int)
+		nextKernelSize := l.next.Size()
 
 		length := nextOutSize[0]*nextOutSize[1]
 		kStep := nextKernelSize[0]*nextKernelSize[1]
@@ -82,7 +83,7 @@ func (l *PoolLayer) BackProp() {
 
 
 	} else {
-		nextWeights := l.next.GetProp("weights").([][]float64);
+		nextWeights := l.next.Prop("weights").([][]float64);
 
 		for i := 0; i < len(l.out); i++ {
 			v := 0.0;
@@ -96,7 +97,7 @@ func (l *PoolLayer) BackProp() {
 	}
 }
 
-func (l *PoolLayer) GetProp(name string) interface{} {
+func (l *PoolLayer) Prop(name string) interface{} {
 	switch name {
 	case "count": return l.count
 	case "size": return l.size
@@ -109,8 +110,32 @@ func (l *PoolLayer) GetProp(name string) interface{} {
 }
 
 func (l *PoolLayer) getOutSize() []int {
-	inSize := l.prev.GetProp("outSize").([]int)
+	inSize := l.prev.Prop("outSize").([]int)
 
 	return []int{inSize[0]/l.size[0], inSize[1]/l.size[1]}
 }
 
+func (l *PoolLayer) State() interfaces.LayerState {
+	out := make([]float64, len(l.out))
+	copy(out, l.out)
+	state := interfaces.LayerState{
+		Class:l.class,
+		Size: l.size,
+		Out: out,
+		Count: l.count,
+		OutSize: l.getOutSize(),
+	}
+
+	return state
+}
+
+func (l *PoolLayer) WeightsState() interfaces.WeightsState {
+	weightsState := interfaces.WeightsState{
+		Class: l.class,
+	}
+	return weightsState
+}
+
+func (l *PoolLayer) SetWeightsState(weightsState interfaces.WeightsState) {
+
+}

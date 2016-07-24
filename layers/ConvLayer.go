@@ -3,6 +3,7 @@ package layers
 import (
 	//"fmt"
 	"math/rand"
+	"github.com/alexkarpovich/convnet/interfaces"
 	. "github.com/alexkarpovich/convnet/utils"
 )
 
@@ -25,9 +26,9 @@ func (l *ConvLayer) Construct(shape string, count int) {
 
 func (l *ConvLayer) Prepare() {
 	if l.prev != nil {
-		prevClass := l.prev.GetClass()
+		prevClass := l.prev.Class()
 		if prevClass=="conv" || prevClass=="pool" {
-			l.inCount = l.prev.GetProp("count").(int)
+			l.inCount = l.prev.Prop("count").(int)
 		}
 	}
 
@@ -49,7 +50,7 @@ func (l *ConvLayer) Prepare() {
 
 }
 
-func (l *ConvLayer) GetProp(name string) interface{} {
+func (l *ConvLayer) Prop(name string) interface{} {
 	switch name {
 	case "count": return l.count
 	case "inCount": return l.inCount
@@ -66,18 +67,18 @@ func (l *ConvLayer) GetProp(name string) interface{} {
 
 func (l *ConvLayer) FeedForward() {
 	isFirst := true
-	input := l.net.GetInput()
-	inputSize := l.net.GetSize()
+	input := l.net.Input()
+	inputSize := l.net.Size()
 	var prevOut []float64
 
 	if l.prev != nil {
-		prevClass := l.prev.GetClass()
+		prevClass := l.prev.Class()
 		isFirst = false
 
 		if prevClass=="conv" || prevClass=="pool" {
-			l.inCount = l.prev.GetProp("count").(int)
-			inputSize = l.prev.GetProp("outSize").([]int)
-			prevOut = l.prev.GetProp("out").([]float64)
+			l.inCount = l.prev.Prop("count").(int)
+			inputSize = l.prev.Prop("outSize").([]int)
+			prevOut = l.prev.Prop("out").([]float64)
 		}
 	}
 
@@ -108,9 +109,8 @@ func (l *ConvLayer) FeedForward() {
 }
 
 func (l *ConvLayer) BackProp() {
-	alpha := 0.001;
-	nextDeltas := l.next.GetProp("deltas").([]float64);
-	subsize := l.next.GetProp("size").([]int);
+	nextDeltas := l.next.Prop("deltas").([]float64);
+	subsize := l.next.Prop("size").([]int);
 	convSize := l.getOutSize();
 	sLength := subsize[0]*subsize[1]
 	cLength := convSize[0]*convSize[1]
@@ -121,7 +121,7 @@ func (l *ConvLayer) BackProp() {
 
 	for z:=0; z<l.inCount; z++ {
 		l.computeDeltas(z, cLength, sLength, convSize, subsize, nextDeltas, &p)
-		l.correctWeights(z, sLength, iRange, jRange, alpha, &t)
+		l.correctWeights(z, sLength, iRange, jRange, &t)
 	}
 }
 
@@ -144,7 +144,7 @@ func (l *ConvLayer) computeDeltas(z, cLength, sLength int, convSize, subsize []i
 	}
 }
 
-func (l *ConvLayer) correctWeights(z, sLength, iRange, jRange int, alpha float64, t *int) {
+func (l *ConvLayer) correctWeights(z, sLength, iRange, jRange int, t *int) {
 	for k:=0; k<l.count; k++ {
 		offset := k*sLength
 
@@ -155,7 +155,7 @@ func (l *ConvLayer) correctWeights(z, sLength, iRange, jRange int, alpha float64
 				for b:=0; b<l.size[1]; b++ {
 					for a:=0; a<l.size[0]; a++ {
 						l.kernels[a+l.size[0]*b+offset] +=
-							alpha*l.deltas[*t]*DSigmoid(l.in[*t])*l.im[highIndex+a+b*l.imSize[0]];
+							l.net.LearningRate()*l.deltas[*t]*DSigmoid(l.in[*t])*l.im[highIndex+a+b*l.imSize[0]];
 					}
 				}
 
@@ -166,10 +166,10 @@ func (l *ConvLayer) correctWeights(z, sLength, iRange, jRange int, alpha float64
 }
 
 func (l *ConvLayer) getOutSize() []int {
-	inSize := l.net.GetSize()
+	inSize := l.net.Size()
 
 	if l.prev != nil {
-		inSize = l.prev.GetProp("outSize").([]int)
+		inSize = l.prev.Prop("outSize").([]int)
 	}
 
 	switch l.shape {
@@ -179,4 +179,34 @@ func (l *ConvLayer) getOutSize() []int {
 	}
 
 	return inSize
+}
+
+func (l *ConvLayer) State() interfaces.LayerState {
+	out := make([]float64, len(l.out))
+	copy(out, l.out)
+	state := interfaces.LayerState{
+		Class:l.class,
+		Size: l.size,
+		Out: out,
+		InCount: l.inCount,
+		OutSize: l.getOutSize(),
+		Count: l.count,
+	}
+
+	return state
+}
+
+func (l *ConvLayer) WeightsState() interfaces.WeightsState {
+	k := make([]float64, len(l.kernels))
+	copy(k, l.kernels)
+	weightsState := interfaces.WeightsState {
+		Class: l.class,
+		Kernels: k,
+	}
+
+	return weightsState
+}
+
+func (l *ConvLayer) SetWeightsState(weightsState interfaces.WeightsState) {
+	l.kernels = weightsState.Kernels
 }

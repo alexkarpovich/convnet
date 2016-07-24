@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	. "github.com/alexkarpovich/convnet/utils"
+	"github.com/alexkarpovich/convnet/interfaces"
 )
 
 type OutputLayer struct {
@@ -14,7 +15,7 @@ type OutputLayer struct {
 }
 
 func (l *OutputLayer) Prepare() {
-	inSize := l.prev.GetProp("outSize").([]int)
+	inSize := l.prev.Prop("outSize").([]int)
 	length := inSize[0]
 
 	l.weights = make([][]float64, length)
@@ -32,8 +33,8 @@ func (l *OutputLayer) Prepare() {
 }
 
 func (l *OutputLayer) FeedForward() {
-	prevOut := l.prev.GetProp("out").([]float64)
-	prevSize := l.prev.GetProp("outSize").([]int)
+	prevOut := l.prev.Prop("out").([]float64)
+	prevSize := l.prev.Prop("outSize").([]int)
 
 	for j:=0; j<l.size[0]; j++ {
 		s := 0.0
@@ -47,14 +48,13 @@ func (l *OutputLayer) FeedForward() {
 	}
 
 	l.net.SetOutput(l.out)
-	l.net.SetError(l.GetError())
+	l.net.SetError(l.error())
 }
 
 func (l *OutputLayer) BackProp() {
-	alpha := 0.001
-	label := l.net.GetLabel();
-	inSize := l.prev.GetProp("outSize").([]int)
-	prevOut := l.prev.GetProp("out").([]float64)
+	label := l.net.Label();
+	inSize := l.prev.Prop("outSize").([]int)
+	prevOut := l.prev.Prop("out").([]float64)
 
 	for i:=0; i<l.size[0]; i++ {
 		l.deltas[i] = label[i] - l.out[i];
@@ -62,12 +62,12 @@ func (l *OutputLayer) BackProp() {
 
 	for j:=0; j<l.size[0]; j++ {
 		for i:=0; i<inSize[0];i++ {
-			l.weights[i][j] += alpha*l.deltas[j]*DSigmoid(l.in[j])*prevOut[i];
+			l.weights[i][j] += l.net.LearningRate()*l.deltas[j]*DSigmoid(l.in[j])*prevOut[i];
 		}
 	}
 }
 
-func (l *OutputLayer) GetProp(name string) interface{} {
+func (l *OutputLayer) Prop(name string) interface{} {
 	switch name {
 	case "outSize": return l.size
 	case "in": return l.in
@@ -78,7 +78,7 @@ func (l *OutputLayer) GetProp(name string) interface{} {
 	return nil
 }
 
-func (l *OutputLayer) GetError() float64 {
+func (l *OutputLayer) error() float64 {
 	err := 0.0
 
 	for i := range l.deltas {
@@ -86,4 +86,35 @@ func (l *OutputLayer) GetError() float64 {
 	}
 
 	return err
+}
+
+func (l *OutputLayer) State() interfaces.LayerState {
+	out := make([]float64, len(l.out))
+	copy(out, l.out)
+	state := interfaces.LayerState{
+		Class:l.class,
+		Size: l.size,
+		Out: out,
+	}
+
+	return state
+}
+
+func (l *OutputLayer) WeightsState() interfaces.WeightsState {
+	w := make([][]float64, len(l.weights))
+	for i:=0; i<len(l.weights);i++ {
+		w[i] = make([]float64, len(l.weights[0]))
+		copy(w[i], l.weights[i])
+	}
+
+	weightsState := interfaces.WeightsState{
+		Class: l.class,
+		Weights: w,
+	}
+
+	return weightsState
+}
+
+func (l *OutputLayer) SetWeightsState(weightsState interfaces.WeightsState) {
+	l.weights = weightsState.Weights
 }
