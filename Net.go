@@ -106,6 +106,8 @@ func (net *Net) Train(params TrainParams, trainingSet *GoMNIST.Set) {
 
 		iter++
 	}
+
+	net.isTraining = false
 }
 
 func (net *Net) StopTraining() {
@@ -146,6 +148,10 @@ func (net *Net) State() NetState {
 	}
 
 	return netState
+}
+
+func (net *Net) IsTraining() bool {
+	return net.isTraining
 }
 
 func (net *Net) LearningRate() float64 {

@@ -20,6 +20,7 @@ type INet interface {
 	Train(TrainParams, *GoMNIST.Set)
 	StopTraining()
 	Test(image.Image)
+	IsTraining() bool
 	LearningRate() float64
 	MaxIterations() int
 	MinError() float64
