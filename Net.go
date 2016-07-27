@@ -19,6 +19,7 @@ type Net struct {
 	layers []ILayer
 	label []float64
 	err float64
+	error float64
 	isTraining bool
 	maxIterations int
 	minError float64
@@ -98,6 +99,7 @@ func (net *Net) Train(params TrainParams, trainingSet *GoMNIST.Set) {
 			err += net.err
 		}
 
+		net.error = err
 		net.chnl <- net.State()
 		elapsed := time.Since(start)
 		runtime.ReadMemStats(&mem)
@@ -140,6 +142,7 @@ func (net *Net) State() NetState {
 		Size:net.size,
 		In: net.in,
 		Out: net.out,
+		Error: net.error,
 		Layers: make([]LayerState, len(net.layers)),
 	}
 
