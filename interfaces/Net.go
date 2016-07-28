@@ -31,6 +31,7 @@ type NetState struct {
 	In []float64 `json:"in"`
 	Out []float64 `json:"out"`
 	Error float64 `json:"error"`
+	Iteration int `json:"iteration"`
 	Layers []LayerState `json:"layers"`
 }
 
