@@ -90,7 +90,7 @@ func (net *Net) Train(params TrainParams, trainingSet *GoMNIST.Set) {
 		err = 0
 		start := time.Now()
 
-		for i:=0; i<402; i++ {
+		for i:=0; i<401; i++ {
 			net.setMNISTExample(trainingSet.Images[i], trainingSet.Labels[i])
 			net.forward()
 			net.backward()
@@ -118,13 +118,11 @@ func (net *Net) StopTraining() {
 	net.isTraining = false
 }
 
-func (net *Net) Test(img image.Image) {
-	bounds := img.Bounds()
-	net.size = []int{bounds.Max.X, bounds.Max.Y}
-	net.prepareInput(img)
+func (net *Net) Test(img []byte) []float64 {
+	net.prepareMNISTInput(img)
 	net.forward()
 
-	fmt.Println(net.out)
+	return net.out
 }
 
 func (net *Net) Size() []int {

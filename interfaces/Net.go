@@ -1,7 +1,6 @@
 package interfaces
 
 import (
-	"image"
 	"github.com/alexkarpovich/convnet/config"
 	"github.com/petar/GoMNIST"
 )
@@ -19,7 +18,7 @@ type INet interface {
 	LoadWeights([]WeightsState)
 	Train(TrainParams, *GoMNIST.Set)
 	StopTraining()
-	Test(image.Image)
+	Test([]byte) []float64
 	IsTraining() bool
 	LearningRate() float64
 	MaxIterations() int
