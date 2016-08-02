@@ -122,6 +122,8 @@ func (net *Net) Test(img []byte) []float64 {
 	net.prepareMNISTInput(img)
 	net.forward()
 
+	net.chnl <- net.State()
+
 	return net.out
 }
 
